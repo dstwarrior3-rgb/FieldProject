@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaming & Sleep Survey</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+            color: #333;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(-20px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        input, select {
+            margin-top: 8px;
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            transition: 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 5px rgba(74,144,226,0.5);
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4a90e2, #357ABD);
+            color: #fff;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .checkbox-group div {
+            margin-top: 8px;
+        }
+
+        @media(max-width: 600px) {
+            .container {margin: 20px; padding: 15px;}
+            button {font-size: 14px; padding: 8px;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎮 Gaming VS Sleep Cycle</h1>
+    <form id="surveyForm">
+        <label for="name">Full Name *</label>
+        <input type="text" id="name" name="name" required placeholder="Enter your full name">
+
+        <label for="age">Age *</label>
+        <input type="number" id="age" name="age" min="10" max="100" required placeholder="Enter your age">
+
+        <label for="gaming">Daily Gaming Hours *</label>
+        <input type="number" id="gaming" name="gaming" min="0" max="24" required placeholder="Enter hours per day">
+
+        <label for="sleep">Daily Sleeping Hours *</label>
+        <input type="number" id="sleep" name="sleep" min="0" max="24" required placeholder="Enter hours per day">
+
+        <label>Preferred Gaming Time *</label>
+        <div class="checkbox-group">
+            <div>
+                <input type="checkbox" name="timePref" value="Morning" id="morning">
+                <label for="morning">Morning</label>
+            </div>
+            <div>
+                <input type="checkbox" name="timePref" value="Afternoon" id="afternoon">
+                <label for="afternoon">Afternoon</label>
+            </div>
+            <div>
+                <input type="checkbox" name="timePref" value="Evening" id="evening">
+                <label for="evening">Evening</label>
+            </div>
+            <div>
+                <input type="checkbox" name="timePref" value="Night" id="night">
+                <label for="night">Night</label>
+            </div>
+        </div>
+
+        <button type="submit">Analyze My Routine</button>
+    </form>
+</div>
+
+<script>
+    const form = document.getElementById('surveyForm');
+    form.addEventListener('submit', function(e){
+        e.preventDefault();
+
+        const name = document.getElementById('name').value;
+        const age = parseInt(document.getElementById('age').value);
+        const gaming = parseInt(document.getElementById('gaming').value);
+        const sleep = parseInt(document.getElementById('sleep').value);
+
+        // Collect multiple selected gaming times
+        const timePrefs = [];
+        document.querySelectorAll('input[name="timePref"]:checked').forEach(el => {
+            timePrefs.push(el.value);
+        });
+
+        if(timePrefs.length === 0){
+            alert('Please select at least one preferred gaming time.');
+            return;
+        }
+
+        const userData = { name, age, gaming, sleep, timePref: timePrefs };
+
+        localStorage.setItem('userData', JSON.stringify(userData));
+        window.location.href = 'output.html';
+    });
+</script>
+
+</body>
+</html>

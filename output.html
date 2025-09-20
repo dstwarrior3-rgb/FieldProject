@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gaming & Sleep Status</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+    color: #333;
+}
+.container {
+    max-width: 750px;
+    margin: 30px auto;
+    background: #fff;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    animation: fadeIn 1s ease-in-out;
+    text-align: center;
+}
+@keyframes fadeIn { from {opacity: 0; transform: translateY(-20px);} to {opacity: 1; transform: translateY(0);} }
+h1 { margin-bottom: 25px; color: #2c3e50; }
+.status-box {
+    font-size: 26px;
+    font-weight: bold;
+    padding: 20px;
+    border-radius: 15px;
+    color: #fff;
+    margin-top: 15px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+.message { margin-top: 15px; font-size: 18px; color: #2c3e50; }
+.graph-container { margin-top: 30px; }
+canvas { margin-top: 15px; border-radius: 12px; }
+.recommendation {
+    margin-top: 25px;
+    background: linear-gradient(135deg, #fceabb, #f8b500);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    text-align: left;
+    animation: fadeIn 1.5s ease-in-out;
+}
+.recommendation h3 { color: #2c3e50; margin-bottom: 10px; }
+.recommendation ol li { margin-bottom: 10px; }
+.download-btn {
+    margin-top: 25px;
+    padding: 12px 20px;
+    background: #4a90e2;
+    color: #fff;
+    font-size: 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.download-btn:hover {
+    background: #357ABD;
+}
+@media(max-width:600px){
+    .container{margin:20px;padding:20px;}
+    .status-box{font-size:22px;padding:18px;}
+    .message{font-size:16px;}
+    .recommendation{padding:15px;}
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="reportContent">
+    <h1>🎮 Gaming & Sleep Status</h1>
+    <div id="statusBox" class="status-box">Loading Status...</div>
+    <div id="messageBox" class="message">Loading Message...</div>
+
+    <!-- User Input Graph -->
+    <div class="graph-container">
+        <h2>Your Gaming & Sleep Hours 📊</h2>
+        <canvas id="userChart"></canvas>
+    </div>
+
+    <!-- Community Comparison Graph -->
+    <div class="graph-container">
+        <h2>Community Comparison 🌍</h2>
+        <canvas id="communityChart"></canvas>
+    </div>
+
+    <!-- Personal Recommendation -->
+    <div id="recommendationBox" class="recommendation" style="display:none;"></div>
+
+    <!-- Download Button -->
+    <button class="download-btn" id="downloadBtn">📥 Download Report as PDF</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if(!userData){
+        alert('No user data found! Please fill the survey first.');
+        window.location.href = 'input.html';
+        return;
+    }
+
+    const {gaming, sleep, name} = userData;
+
+    let statusText = '', statusColor = '', messageText = '', showRecommendation = false;
+
+    if(gaming <= 3 && sleep >= 7){
+        statusText = 'Healthy ✅'; statusColor = '#27ae60';
+        messageText = 'Your health is healthy! Keep maintaining consistency.';
+    } else if(gaming > 3 && gaming <= 5 && sleep >= 6){
+        statusText = 'Needs Balance ⚠'; statusColor = '#f1c40f';
+        messageText = 'Moderate gaming hours. Try to balance gaming and sleep for better health.';
+        showRecommendation = true;
+    } else if(gaming > 5 && sleep < 6){
+        statusText = 'Critical ❌'; statusColor = '#e74c3c';
+        messageText = 'High gaming & low sleep detected! Reduce gaming and prioritize sleep immediately.';
+        showRecommendation = true;
+    } else if(sleep > 10){
+        statusText = 'Oversleeping 😴'; statusColor = '#3498db';
+        messageText = 'Excessive sleep detected! Try to maintain regular sleep hours.';
+        showRecommendation = true;
+    } else{
+        statusText = 'Mixed ⚠'; statusColor = '#9b59b6';
+        messageText = 'Your routine is mixed. Adjust gaming and sleep for better balance.';
+        showRecommendation = true;
+    }
+
+    const statusBox = document.getElementById('statusBox');
+    const messageBox = document.getElementById('messageBox');
+    statusBox.textContent = statusText;
+    statusBox.style.backgroundColor = statusColor;
+    messageBox.textContent = messageText;
+
+    // User Input Chart
+    const userCtx = document.getElementById('userChart').getContext('2d');
+    new Chart(userCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Gaming Hours', 'Sleep Hours'],
+            datasets: [{
+                label: name + "'s Daily Routine",
+                data: [gaming, sleep],
+                backgroundColor: ['#4a90e2','#27ae60'],
+                borderRadius: 10
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false }, tooltip: { enabled: true } }, scales: { y: { beginAtZero: true, max: 10 } } }
+    });
+
+    // Community Comparison Chart
+    const communityCtx = document.getElementById('communityChart').getContext('2d');
+    new Chart(communityCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Gaming Hours', 'Sleep Hours'],
+            datasets: [
+                { label: name, data: [gaming, sleep], backgroundColor: ['#4a90e2','#27ae60'], borderRadius: 10 },
+                { label: 'India Avg', data: [4,7], backgroundColor: ['#e67e22','#f39c12'], borderRadius: 10 }
+            ]
+        },
+        options: { responsive: true, plugins: { legend: { display: true }, tooltip: { enabled: true } }, scales: { y: { beginAtZero: true, max: 10 } } }
+    });
+
+    // Personal Recommendation
+    const recommendationBox = document.getElementById('recommendationBox');
+    if(showRecommendation){
+        let recommendationHTML = '<h3>📝 Personal Recommendations:</h3><ol>';
+        if(statusText === 'Needs Balance ⚠'){
+            recommendationHTML += '<li>Limit daily gaming to 2-3 hours.</li>';
+            recommendationHTML += '<li>Ensure 7-8 hours of quality sleep each night.</li>';
+            recommendationHTML += '<li>Take short breaks every hour while gaming.</li>';
+            recommendationHTML += '<li>Include light physical activity daily.</li>';
+            recommendationHTML += '<li>Maintain a consistent routine.</li>';
+        } else if(statusText === 'Critical ❌'){
+            recommendationHTML += '<li>Reduce gaming to 1-2 hours maximum.</li>';
+            recommendationHTML += '<li>Prioritize 7-9 hours of uninterrupted sleep.</li>';
+            recommendationHTML += '<li>Stay hydrated and eat balanced meals.</li>';
+            recommendationHTML += '<li>Include daily exercise or light physical activity.</li>';
+            recommendationHTML += '<li>Follow a strict gaming schedule.</li>';
+            recommendationHTML += '<li>Monitor health and consult a professional if needed.</li>';
+        } else if(statusText === 'Oversleeping 😴'){
+            recommendationHTML += '<li>Limit sleep to 7-9 hours daily.</li>';
+            recommendationHTML += '<li>Engage in daytime activity to avoid lethargy.</li>';
+            recommendationHTML += '<li>Avoid gaming late at night.</li>';
+            recommendationHTML += '<li>Maintain consistent wake-up and sleep times.</li>';
+            recommendationHTML += '<li>Adjust routine based on energy levels.</li>';
+        } else if(statusText === 'Mixed ⚠'){
+            recommendationHTML += '<li>Balance gaming and sleep carefully.</li>';
+            recommendationHTML += '<li>Maintain 7-9 hours of sleep daily.</li>';
+            recommendationHTML += '<li>Take regular breaks during gaming sessions.</li>';
+            recommendationHTML += '<li>Include light physical activity.</li>';
+            recommendationHTML += '<li>Follow a consistent daily schedule.</li>';
+        }
+        recommendationHTML += '</ol>';
+        recommendationBox.innerHTML = recommendationHTML;
+        recommendationBox.style.display = 'block';
+    }
+
+    // Download PDF (text-only + recommendations)
+    document.getElementById('downloadBtn').addEventListener('click', async function(){
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p','mm','a4');
+        let y = 10;
+        pdf.setFontSize(20);
+        pdf.text('Gaming & Sleep Report', 105, y, {align:'center'});
+        y += 15;
+        pdf.setFontSize(16);
+        pdf.text('Status: ' + statusText, 15, y);
+        y += 10;
+        pdf.text('Message: ' + messageText, 15, y);
+        y += 15;
+        // Personal Recommendations
+        if(showRecommendation){
+            pdf.text('Personal Recommendations:', 20, y);
+            y += 10;
+            const recommendations = recommendationBox.querySelectorAll('li');
+            recommendations.forEach((li, index)=>{
+                const lines = pdf.splitTextToSize((index+1)+'. '+li.textContent, 180);
+                pdf.text(lines, 15, y);
+                y += lines.length * 7;
+            });
+        }
+        pdf.save(name + '_GamingSleepReport.pdf');
+    });
+
+});
+</script>
+
+</body>
+</html>
